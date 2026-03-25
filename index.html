@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Govt. Exam Wallah | Computer Room Slot Booking</title>
+  <meta
+    name="description"
+    content="Responsive slot-booking experience for computer room access, powered by Google Sheets and Google Apps Script."
+  >
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="ambient ambient-c"></div>
+
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark">
+          <img src="logo.png" alt="Govt. Exam Wallah logo">
+        </div>
+        <div class="brand-copy">
+          <p class="eyebrow">Computer Hall Access</p>
+          <h1>Govt. Exam Wallah</h1>
+        </div>
+      </div>
+      <button id="logoutButton" class="ghost-button is-hidden" type="button">Logout</button>
+    </header>
+
+    <main class="layout">
+      <section id="authPanel" class="hero-panel glass-panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Computer Lab Booking</p>
+          <h2>Book your computer room slot.</h2>
+          <p class="hero-text">
+            Students can book seats, and branch heads can monitor occupancy with one shared system.
+          </p>
+        </div>
+
+        <div class="ticket-notch ticket-notch-left"></div>
+        <div class="login-card ticket-frame">
+          <div class="ticket-notch ticket-notch-right"></div>
+
+          <div class="auth-mode-switch" role="tablist" aria-label="Login mode">
+            <button id="studentModeButton" class="auth-mode-button is-active" type="button" data-auth-mode="student">Student</button>
+            <button id="branchModeButton" class="auth-mode-button" type="button" data-auth-mode="branch">Branch Head</button>
+          </div>
+
+          <div id="studentLoginView" class="auth-view">
+            <p class="section-kicker">Student Login</p>
+            <h3>Enter Registration Number</h3>
+
+            <form id="loginForm" class="auth-form">
+              <label class="field-label" for="regnoInput">Registration Number</label>
+              <div class="field-row">
+                <input
+                  id="regnoInput"
+                  class="field-input"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="8"
+                  placeholder="22562320"
+                  aria-describedby="loginHelp"
+                >
+                <button id="loginButton" class="primary-button" type="submit">Enter</button>
+              </div>
+              <p id="loginHelp" class="helper-copy">Use your 8-digit regno to continue.</p>
+            </form>
+          </div>
+
+          <div id="branchLoginView" class="auth-view is-hidden">
+            <p class="section-kicker">Branch Login</p>
+            <h3>Open Branch Dashboard</h3>
+
+            <form id="branchLoginForm" class="auth-form">
+              <label class="field-label" for="branchSelect">Branch</label>
+              <select id="branchSelect" class="field-input field-select" aria-describedby="branchLoginHelp">
+                <option value="">Select branch</option>
+              </select>
+
+              <label class="field-label" for="branchPasscodeInput">Passcode</label>
+              <div class="field-row">
+                <input
+                  id="branchPasscodeInput"
+                  class="field-input"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Enter passcode"
+                >
+                <button id="branchLoginButton" class="primary-button" type="submit">Enter</button>
+              </div>
+              <p id="branchLoginHelp" class="helper-copy">Use your branch passcode to view bookings and occupancy.</p>
+            </form>
+          </div>
+
+          <div id="configBanner" class="config-banner is-hidden">
+            Add your deployed Apps Script web app URL in <code>config.js</code> to activate login.
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="dashboard is-hidden">
+        <div class="dashboard-grid">
+          <aside class="dashboard-sidebar">
+            <section class="glass-panel profile-panel">
+              <p class="section-kicker">Student</p>
+              <h3 id="studentName">Student Name</h3>
+              <div class="profile-meta">
+                <div>
+                  <span class="meta-label">Registration No.</span>
+                  <strong id="studentRegno">-</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Center</span>
+                  <strong id="studentCenter">-</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Course</span>
+                  <strong id="studentCourse">-</strong>
+                </div>
+              </div>
+              <div id="nextBookingPanel" class="next-booking-panel is-hidden">
+                <p class="section-kicker">Next Booking</p>
+                <h3 id="nextBookingTitle">No upcoming booking</h3>
+                <p id="nextBookingText" class="subtle-copy"></p>
+              </div>
+            </section>
+          </aside>
+
+          <div class="dashboard-main">
+            <section class="glass-panel slot-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Choose Date</p>
+                  <h3>Available slots</h3>
+                </div>
+                <div id="selectedDateBadge" class="date-badge">-</div>
+              </div>
+
+              <div class="date-rail-wrap">
+                <button id="dateRailPrev" class="rail-button" type="button" aria-label="Scroll dates left">&#10094;</button>
+                <div id="dateRail" class="date-rail" aria-label="Booking dates"></div>
+                <button id="dateRailNext" class="rail-button" type="button" aria-label="Scroll dates right">&#10095;</button>
+              </div>
+
+              <div id="slotMessage" class="inline-message is-hidden"></div>
+              <div id="slotGrid" class="slot-grid" aria-live="polite"></div>
+            </section>
+
+            <section class="glass-panel history-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Bookings</p>
+                  <h3>Upcoming, past and cancelled</h3>
+                </div>
+              </div>
+
+              <div class="history-tabs" role="tablist" aria-label="Booking history tabs">
+                <button class="history-tab is-active" data-history-tab="upcoming" type="button">Upcoming</button>
+                <button class="history-tab" data-history-tab="past" type="button">Past</button>
+                <button class="history-tab" data-history-tab="cancelled" type="button">Cancelled</button>
+              </div>
+
+              <div id="historyList" class="history-list" aria-live="polite"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="adminDashboard" class="dashboard is-hidden">
+        <div class="dashboard-grid">
+          <aside class="dashboard-sidebar">
+            <section class="glass-panel profile-panel">
+              <p class="section-kicker">Branch Head</p>
+              <h3 id="adminBranchName">Branch Name</h3>
+              <div class="profile-meta">
+                <div>
+                  <span class="meta-label">Manager</span>
+                  <strong id="adminManagerName">-</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Working Computers</span>
+                  <strong id="adminCapacity">-</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Selected Date</span>
+                  <strong id="adminSelectedDate">-</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="glass-panel profile-panel admin-summary-panel">
+              <p class="section-kicker">Occupancy Snapshot</p>
+              <div class="admin-metric-grid">
+                <div class="admin-metric">
+                  <span class="meta-label">Unique Students</span>
+                  <strong id="adminTotalBooked">0</strong>
+                </div>
+                <div class="admin-metric">
+                  <span class="meta-label">Peak Occupancy</span>
+                  <strong id="adminPeakOccupancy">0%</strong>
+                </div>
+                <div class="admin-metric">
+                  <span class="meta-label">Most Booked Slot</span>
+                  <strong id="adminMostBookedSlot">-</strong>
+                </div>
+                <div class="admin-metric">
+                  <span class="meta-label">Full Slots</span>
+                  <strong id="adminFullyBookedSlots">0</strong>
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          <div class="dashboard-main">
+            <section class="glass-panel slot-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Branch Occupancy</p>
+                  <h3>Selected-date slot overview</h3>
+                </div>
+                <div id="adminDateBadge" class="date-badge">-</div>
+              </div>
+
+              <div class="date-rail-wrap">
+                <button id="adminDateRailPrev" class="rail-button" type="button" aria-label="Scroll admin dates left">&#10094;</button>
+                <div id="adminDateRail" class="date-rail" aria-label="Branch dashboard dates"></div>
+                <button id="adminDateRailNext" class="rail-button" type="button" aria-label="Scroll admin dates right">&#10095;</button>
+              </div>
+
+              <div id="adminSlotMessage" class="inline-message is-hidden"></div>
+              <div id="adminSlotGrid" class="slot-grid" aria-live="polite"></div>
+            </section>
+
+            <section class="glass-panel history-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="section-kicker">Booked Students</p>
+                  <h3>Roster for selected date</h3>
+                </div>
+                <div id="adminRosterCount" class="date-badge">0 booked</div>
+              </div>
+
+              <div id="adminRosterList" class="history-list" aria-live="polite"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="confirmModal" class="modal-shell is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-card">
+      <button class="modal-close" data-close-modal="confirmModal" type="button" aria-label="Close confirmation">&times;</button>
+      <p class="section-kicker">Confirm Slot</p>
+      <h3 id="confirmTitle">Review your booking</h3>
+      <div id="confirmDetails" class="detail-stack"></div>
+      <div class="modal-actions">
+        <button class="ghost-button" data-close-modal="confirmModal" type="button">Back</button>
+        <button id="confirmBookingButton" class="primary-button" type="button">Book This Slot</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ticketModal" class="modal-shell is-hidden" role="dialog" aria-modal="true" aria-labelledby="ticketTitle">
+    <div class="modal-card ticket-modal-card">
+      <button class="modal-close" data-close-modal="ticketModal" type="button" aria-label="Close ticket">&times;</button>
+      <p class="section-kicker">Booking Confirmed</p>
+      <h3 id="ticketTitle">Your QR ticket is ready.</h3>
+
+      <div class="ticket-preview ticket-frame">
+        <div class="ticket-notch ticket-notch-left"></div>
+        <div class="ticket-notch ticket-notch-right"></div>
+
+        <div class="ticket-header">
+          <div>
+            <span class="ticket-label">Booking ID</span>
+            <strong id="ticketBookingId">-</strong>
+          </div>
+          <div class="status-pill status-available">Booked</div>
+        </div>
+
+        <div class="ticket-body">
+          <div id="ticketQr" class="ticket-qr" aria-label="Booking QR code"></div>
+          <div id="ticketDetails" class="detail-stack"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="copyBookingIdButton" class="ghost-button" type="button">Copy Booking ID</button>
+        <button class="primary-button" data-close-modal="ticketModal" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
